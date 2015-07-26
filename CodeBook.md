@@ -1,152 +1,125 @@
 ---
-title: "CodeBook for 'run_analysis.R'"
-author: "Calvin Chin"
-date: "July 18, 2015"
-output: html_document
+Title: "CodeBook for 'summary.txt'"
+Author: "Calvin Chin"
 ---
 
 ### Introduction
 
-The objective of the 'run_analysis.R' script is to prepare tidy data by extracting and merging the data sets obtained from:
+The summary data in the **"summary.txt"** file is generated after running the  Data Extraction, Cleaning and Summarizing script file called **"run_analysis.R"**. The script basically prepare tidy data set by extracting and merging the source data files obtained from:
 
 https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
 
 
-After reading the source data files, the script then does the following:
+The source data from the link above represent data collected from the accelerometers from the Samsung Galaxy S smartphone. A full description is available at the site where the data was obtained: 
 
-* Combined the 'subject', 'X' and 'y' files from the 'train' and 'test' directory into 'train' and 'test' data sets
-* Appropriately labels the 'train' and 'test' data set with descriptive column names obtained from the 'features.txt' file
-* Creates a single data set by merging the 'train' and 'test' data sets 
-* Change value of the 'activity' column by mapping the value against the descriptive activity names obtained from the 'activity_labels.txt' file
-* Extracts the columns that contains the mean and standard deviation measurements (i.e. column names with 'mean()' or 'std()')
-* Creates a summary data set with the average of each variable, group by each activity and subject.
-
-Finally, the summary data set is written onto a file **'summary.txt'**
+http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
 
 
 ******
-### Initialize the environment
+### Feature Information
 
-Ensures that 'plyr' and 'dlyr' libraries required to run the script is available.
+The features selected for this database come from the accelerometer and gyroscope 3-axial raw signals tAcc-XYZ and tGyro-XYZ. These time domain signals (prefix 't' to denote time) were captured at a constant rate of 50 Hz. Then they were filtered using a median filter and a 3rd order low pass Butterworth filter with a corner frequency of 20 Hz to remove noise. Similarly, the acceleration signal was then separated into body and gravity acceleration signals (tBodyAcc-XYZ and tGravityAcc-XYZ) using another low pass Butterworth filter with a corner frequency of 0.3 Hz. 
 
-```{r}
-if (require(plyr) == FALSE) {
-  stop("Unable to load 'plyr' package that's required to run the script!")
-}
+Subsequently, the body linear acceleration and angular velocity were derived in time to obtain Jerk signals (tBodyAccJerk-XYZ and tBodyGyroJerk-XYZ). Also the magnitude of these three-dimensional signals were calculated using the Euclidean norm (tBodyAccMag, tGravityAccMag, tBodyAccJerkMag, tBodyGyroMag, tBodyGyroJerkMag). 
 
-if (require(dplyr) == FALSE) {
-  stop("Unable to load 'dplyr' package that's required to run the script!")
-}
-```
+Finally a Fast Fourier Transform (FFT) was applied to some of these signals producing fBodyAcc-XYZ, fBodyAccJerk-XYZ, fBodyGyro-XYZ, fBodyAccJerkMag, fBodyGyroMag, fBodyGyroJerkMag. (Note the 'f' to indicate frequency domain signals). 
 
-Initialize path variables according to how the source data files are stored.
+These signals were used to estimate variables of the feature vector for each pattern:  
+'-XYZ' is used to denote 3-axial signals in the X, Y and Z directions.
 
-**NOTE:** The R Script assumes source data is downloaded and Unzip into the "./UCI HAR Dataset/" directory.
+* tBodyAcc-XYZ
+* tGravityAcc-XYZ
+* tBodyAccJerk-XYZ
+* tBodyGyro-XYZ
+* tBodyGyroJerk-XYZ
+* tBodyAccMag
+* tGravityAccMag
+* tBodyAccJerkMag
+* tBodyGyroMag
+* tBodyGyroJerkMag
+* fBodyAcc-XYZ
+* fBodyAccJerk-XYZ
+* fBodyGyro-XYZ
+* fBodyAccMag
+* fBodyAccJerkMag
+* fBodyGyroMag
+* fBodyGyroJerkMag
 
-```{r}
-label_data_path <- "./UCI HAR Dataset/"
-train_data_path <- "./UCI HAR Dataset/train/"
-test_data_path <- "./UCI HAR Dataset/test/"
-```
+The set of variables that were estimated from these signals are: 
 
-### Read label files
-
-```{r}
-# Read 'activity_labels.txt'
-filename <- paste(label_data_path, "activity_labels.txt", sep = "")
-df_activity_labels <- read.table(file = filename, header = FALSE)
-
-# Read 'features.txt'
-filename <- paste(label_data_path, "features.txt", sep = "")
-df_feature_labels <- read.table(file = filename, header = FALSE)
-```
-
-### Read and combine files in the 'train' directory
-
-```{r}
-# Read 'subject_train.txt'
-filename <- paste(train_data_path, "subject_train.txt", sep = "")
-df_subject_train <- read.table(file = filename, header = FALSE)
-colnames(df_subject_train) <- c("subject") 
-
-# Read 'X_train.txt'
-filename <- paste(train_data_path, "X_train.txt", sep = "")
-df_x_train <- read.table(file = filename, header = FALSE)
-colnames(df_x_train) <- as.character(df_feature_labels[,2])
-
-# Read 'y_train.txt'
-filename <- paste(train_data_path, "y_train.txt", sep = "")
-df_y_train <- read.table(file = filename, header = FALSE)
-colnames(df_y_train) <- c("activity")
-
-# Merge subject_train, x_train & y_train into one single Data Frame
-df_train <- cbind(df_subject_train, df_y_train, df_x_train)
-```
-
-### Read and combine files in the 'test' directory
-
-```{r}
-# Read 'subject_test.txt'
-filename <- paste(test_data_path, "subject_test.txt", sep = "")
-df_subject_test <- read.table(file = filename, header = FALSE)
-colnames(df_subject_test) <- c("subject")
-
-# Read 'X_test.txt'
-filename <- paste(test_data_path, "X_test.txt", sep = "")
-df_x_test <- read.table(file = filename, header = FALSE)
-colnames(df_x_test) <- as.character(df_feature_labels[,2])
-
-# Read 'y_test.txt'
-filename <- paste(test_data_path, "y_test.txt", sep = "")
-df_y_test <- read.table(file = filename, header = FALSE)
-colnames(df_y_test) <- c("activity")
-
-# Merge subject_test, x_test & y_test into one single Data Frame
-df_test <- cbind(df_subject_test, df_y_test, df_x_test)
-```
-
-### Create a single data set 'df_combined'
-
-```{r}
-df_combined <- rbind(df_train, df_test)
-```
-
-### Change the value of the 'activity' column to descriptive names
-
-```{r}
-df_combined$activity <- mapvalues(
-                            df_combined$activity, 
-                            from = df_activity_labels[,1], 
-                            to = as.character(df_activity_labels[,2])
-                        )
-```
-
-### Extracts the columns that contains the mean and standard deviation
-
-```{r}
-fieldnames <- c("subject", "activity", 
-                    grep("mean()", names(df_combined), value = TRUE, fixed = TRUE), 
-                    grep("std()", names(df_combined), value = TRUE, fixed = TRUE)
-                )
-df_mean_std_only <- df_combined[, fieldnames]
-```
-
-### Creates a summary data set with the average of each variable.
-
-```{r}
-df_summary <- df_mean_std_only %>%
-                  group_by(activity, subject) %>%
-                      summarise_each(funs(mean))
-
-```
-
-# Write summary data to file: summary.txt
-
-```{r}
-write.table(df_summary, file = 'summary.txt', row.names = FALSE, col.names = TRUE)
-```
+* **mean**: Mean value
+* **std**: Standard deviation
 
 
 
+******
+### Complete list of variable names
 
-
+* "activity"
+* "subject"
+* "tBodyAcc-mean-X"
+* "tBodyAcc-mean-Y"
+* "tBodyAcc-mean-Z"
+* "tGravityAcc-mean-X"
+* "tGravityAcc-mean-Y"
+* "tGravityAcc-mean-Z"
+* "tBodyAccJerk-mean-X"
+* "tBodyAccJerk-mean-Y"
+* "tBodyAccJerk-mean-Z"
+* "tBodyGyro-mean-X"
+* "tBodyGyro-mean-Y"
+* "tBodyGyro-mean-Z"
+* "tBodyGyroJerk-mean-X"
+* "tBodyGyroJerk-mean-Y"
+* "tBodyGyroJerk-mean-Z"
+* "tBodyAccMag-mean"
+* "tGravityAccMag-mean"
+* "tBodyAccJerkMag-mean"
+* "tBodyGyroMag-mean"
+* "tBodyGyroJerkMag-mean"
+* "fBodyAcc-mean-X"
+* "fBodyAcc-mean-Y"
+* "fBodyAcc-mean-Z"
+* "fBodyAccJerk-mean-X"
+* "fBodyAccJerk-mean-Y"
+* "fBodyAccJerk-mean-Z"
+* "fBodyGyro-mean-X"
+* "fBodyGyro-mean-Y"
+* "fBodyGyro-mean-Z"
+* "fBodyAccMag-mean"
+* "fBodyBodyAccJerkMag-mean"
+* "fBodyBodyGyroMag-mean"
+* "fBodyBodyGyroJerkMag-mean"
+* "tBodyAcc-std-X"
+* "tBodyAcc-std-Y"
+* "tBodyAcc-std-Z"
+* "tGravityAcc-std-X"
+* "tGravityAcc-std-Y"
+* "tGravityAcc-std-Z"
+* "tBodyAccJerk-std-X"
+* "tBodyAccJerk-std-Y"
+* "tBodyAccJerk-std-Z"
+* "tBodyGyro-std-X"
+* "tBodyGyro-std-Y"
+* "tBodyGyro-std-Z"
+* "tBodyGyroJerk-std-X"
+* "tBodyGyroJerk-std-Y"
+* "tBodyGyroJerk-std-Z"
+* "tBodyAccMag-std"
+* "tGravityAccMag-std"
+* "tBodyAccJerkMag-std"
+* "tBodyGyroMag-std"
+* "tBodyGyroJerkMag-std"
+* "fBodyAcc-std-X"
+* "fBodyAcc-std-Y"
+* "fBodyAcc-std-Z"
+* "fBodyAccJerk-std-X"
+* "fBodyAccJerk-std-Y"
+* "fBodyAccJerk-std-Z"
+* "fBodyGyro-std-X"
+* "fBodyGyro-std-Y"
+* "fBodyGyro-std-Z"
+* "fBodyAccMag-std"
+* "fBodyBodyAccJerkMag-std"
+* "fBodyBodyGyroMag-std"
+* "fBodyBodyGyroJerkMag-std"
